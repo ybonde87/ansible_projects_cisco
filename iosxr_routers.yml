@@ -1,0 +1,53 @@
+---
+- hosts: iosxr
+  gather_facts: false
+  connection: network_cli
+
+
+  tasks:
+
+   - name: Configure SNMP 
+     iosxr_config:
+       lines:
+         - snmp-server community snmp@RW RW
+
+
+   - name: Configure SYSLOG 
+     iosxr_config:
+       lines:
+         - logging 172.16.0.20 vrf default severity info
+
+ 
+
+   - name: Configure tacacs source interface 
+     iosxr_config:
+       lines:
+         - tacacs source-interface Loopback0 vrf default
+
+
+   - name: Configure tacacs server host & key
+     iosxr_config:
+       lines:
+         - key 0 tacacs
+       parents:
+         - tacacs-server host 172.16.0.5
+
+
+   - name: Configure aaa Authentication
+     iosxr_config:
+       lines:
+         - aaa authentication login default local group tacacs+ 
+
+   - name: Configure aaa accounting
+     iosxr_config:
+       lines:
+         - aaa accounting exec default start-stop group tacacs+
+         - aaa accounting system default start-stop group tacacs+
+         - aaa accounting commands default start-stop group tacacs+
+
+
+   - name: Configure aaa authorization
+     iosxr_config:
+       lines:
+         - aaa authorization commands default group tacacs+
+

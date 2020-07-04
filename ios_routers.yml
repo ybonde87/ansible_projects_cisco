@@ -1,0 +1,101 @@
+---
+- hosts: ios
+  gather_facts: false
+  connection: network_cli
+
+
+  tasks:
+
+
+   - name: Configure SNMP Community
+     ios_config:
+
+       lines:
+         - snmp-server community snmp@RW rw
+
+
+   - name: Configure SYSLOG
+     ios_config:
+
+       lines:
+         - logging host 172.16.0.20
+
+
+   - name: Configure aaa new-model
+     ios_config:
+
+       lines:
+         - aaa new-model
+
+
+   - name: Configure tacacs server
+     ios_config:
+       lines:
+         - address ipv4 172.16.0.5
+         - key tacacs
+       parents:
+         - tacacs server ISE
+
+
+   - name: Configure aaa group server
+     ios_config:
+       lines:
+         - server name ISE
+       parents:
+         - aaa group server tacacs+ ISE_GROUP
+
+
+   - name: Configure sorce interface for TACACS
+     ios_config:
+       lines:
+         - ip tacacs source-interface loopback 0
+
+
+   - name: Configure aaa Authentication
+     ios_config:
+       lines:
+         - aaa authentication login default group ISE_GROUP local
+         - aaa authentication login VTY group ISE_GROUP  local
+         - aaa authentication login CONSOLE group ISE_GROUP  local
+         - aaa authentication enable default group ISE_GROUP enable
+
+
+   - name: Configure Line Console
+     ios_config:
+       lines:
+         - logging synchronous
+         - login authentication CONSOLE
+         - stopbits 1
+       parents:
+         - line con 0
+
+
+   - name: Configure Line VTY 
+     ios_config:
+       lines:
+         - session-timeout 30
+         - exec-timeout 30 0
+         - logging synchronous
+         - login authentication VTY
+         - transport input all
+       parents:
+         - line vty 0 4
+
+
+   - name: Configure aaa accounting
+     ios_config:
+       lines:
+         - aaa accounting exec default start-stop group ISE_GROUP 
+         - aaa accounting commands 0 default start-stop group ISE_GROUP
+         - aaa accounting commands 1 default start-stop group ISE_GROUP
+         - aaa accounting commands 15 default start-stop group ISE_GROUP
+
+
+   - name: Configure aaa authorization
+     ios_config:
+       lines:
+         - aaa authorization exec default group ISE_GROUP local
+         - aaa authorization commands 1 default group ISE_GROUP
+         - aaa authorization commands 15 default group ISE_GROUP
+         - aaa authorization config-commands
+
